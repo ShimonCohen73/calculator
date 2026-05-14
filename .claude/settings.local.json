@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git --version)",
+      "Bash(dir *)",
+      "Bash(cmd.exe *)",
+      "Bash(claude mcp *)",
+      "Bash(gh auth *)",
+      "Bash(gh api *)",
+      "Bash(gh repo *)",
+      "Bash(gh --version)",
+      "Bash(command -v gh)",
+      "mcp__github__create_repository"
+    ]
+  }
+}
