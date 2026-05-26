@@ -4,6 +4,7 @@ This module provides an interactive REPL (Read-Eval-Print Loop) for
 performing calculations from the command line.
 """
 
+import math
 import re
 import sys
 from typing import Optional
@@ -28,6 +29,18 @@ Supported Operations:
   Power:          2 ^ 8
   Modulo:         17 % 5
   Square Root:    sqrt(16)
+
+Trigonometric Functions (radians by default):
+  sin(1.57)       - Sine
+  cos(0)          - Cosine
+  tan(0.5)        - Tangent
+  asin(0.5)       - Arc sine (inverse)
+  acos(0.5)       - Arc cosine (inverse)
+  atan(1)         - Arc tangent (inverse)
+
+Degrees Mode (append 'd' to the number):
+  sin(90d)        - Sine of 90 degrees
+  asin(1d)        - Arc sine, result in degrees
 
 Type an expression and press Enter to calculate.
 """
@@ -73,6 +86,35 @@ def evaluate_expression(expr: str) -> tuple[str, Number]:
         n = parse_number(sqrt_match.group(1))
         result = core.square_root(n)
         return f"sqrt({n})", result
+
+    trig_match = re.match(
+        r"(a?sin|a?cos|a?tan)\s*\(\s*([+-]?\d*\.?\d+)(d?)\s*\)", expr, re.IGNORECASE
+    )
+    if trig_match:
+        func_name = trig_match.group(1).lower()
+        n = parse_number(trig_match.group(2))
+        degrees_mode = trig_match.group(3).lower() == "d"
+
+        trig_funcs = {
+            "sin": core.sin,
+            "cos": core.cos,
+            "tan": core.tan,
+            "asin": core.asin,
+            "acos": core.acos,
+            "atan": core.atan,
+        }
+
+        is_inverse = func_name.startswith("a")
+
+        if degrees_mode:
+            if is_inverse:
+                result = math.degrees(trig_funcs[func_name](n))
+            else:
+                result = trig_funcs[func_name](math.radians(n))
+            return f"{func_name}({n}d)", result
+        else:
+            result = trig_funcs[func_name](n)
+            return f"{func_name}({n})", result
 
     binary_match = re.match(
         r"([+-]?\d*\.?\d+)\s*([+\-*/^%])\s*([+-]?\d*\.?\d+)", expr

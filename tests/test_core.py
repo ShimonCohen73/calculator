@@ -173,3 +173,117 @@ class TestModulo:
         """Test that 0 % 0 raises ValueError."""
         with pytest.raises(ValueError, match="Cannot perform modulo by zero"):
             core.modulo(0, 0)
+
+
+class TestSin:
+    """Tests for the sin function."""
+
+    @pytest.mark.parametrize(
+        "n,expected",
+        [
+            (0, 0.0),
+            (math.pi / 2, 1.0),
+            (math.pi, 0.0),
+            (math.pi / 6, 0.5),
+        ],
+    )
+    def test_sin_happy_path(self, n: float, expected: float) -> None:
+        """Test sine with various valid inputs."""
+        assert core.sin(n) == pytest.approx(expected, abs=1e-10)
+
+
+class TestCos:
+    """Tests for the cos function."""
+
+    @pytest.mark.parametrize(
+        "n,expected",
+        [
+            (0, 1.0),
+            (math.pi / 2, 0.0),
+            (math.pi, -1.0),
+            (math.pi / 3, 0.5),
+        ],
+    )
+    def test_cos_happy_path(self, n: float, expected: float) -> None:
+        """Test cosine with various valid inputs."""
+        assert core.cos(n) == pytest.approx(expected, abs=1e-10)
+
+
+class TestTan:
+    """Tests for the tan function."""
+
+    @pytest.mark.parametrize(
+        "n,expected",
+        [
+            (0, 0.0),
+            (math.pi / 4, 1.0),
+        ],
+    )
+    def test_tan_happy_path(self, n: float, expected: float) -> None:
+        """Test tangent with various valid inputs."""
+        assert core.tan(n) == pytest.approx(expected, abs=1e-10)
+
+
+class TestAsin:
+    """Tests for the asin function."""
+
+    @pytest.mark.parametrize(
+        "n,expected",
+        [
+            (0, 0.0),
+            (1, math.pi / 2),
+            (-1, -math.pi / 2),
+            (0.5, math.pi / 6),
+        ],
+    )
+    def test_asin_happy_path(self, n: float, expected: float) -> None:
+        """Test arc sine with various valid inputs."""
+        assert core.asin(n) == pytest.approx(expected, abs=1e-10)
+
+    def test_asin_out_of_range_raises_value_error(self) -> None:
+        """Test that asin outside [-1, 1] raises ValueError."""
+        with pytest.raises(ValueError, match="asin requires input between -1 and 1"):
+            core.asin(1.5)
+
+    def test_asin_negative_out_of_range_raises_value_error(self) -> None:
+        """Test that asin below -1 raises ValueError."""
+        with pytest.raises(ValueError, match="asin requires input between -1 and 1"):
+            core.asin(-1.5)
+
+
+class TestAcos:
+    """Tests for the acos function."""
+
+    @pytest.mark.parametrize(
+        "n,expected",
+        [
+            (1, 0.0),
+            (0, math.pi / 2),
+            (-1, math.pi),
+            (0.5, math.pi / 3),
+        ],
+    )
+    def test_acos_happy_path(self, n: float, expected: float) -> None:
+        """Test arc cosine with various valid inputs."""
+        assert core.acos(n) == pytest.approx(expected, abs=1e-10)
+
+    def test_acos_out_of_range_raises_value_error(self) -> None:
+        """Test that acos outside [-1, 1] raises ValueError."""
+        with pytest.raises(ValueError, match="acos requires input between -1 and 1"):
+            core.acos(1.5)
+
+
+class TestAtan:
+    """Tests for the atan function."""
+
+    @pytest.mark.parametrize(
+        "n,expected",
+        [
+            (0, 0.0),
+            (1, math.pi / 4),
+            (-1, -math.pi / 4),
+        ],
+    )
+    def test_atan_happy_path(self, n: float, expected: float) -> None:
+        """Test arc tangent with various valid inputs."""
+        assert core.atan(n) == pytest.approx(expected, abs=1e-10)

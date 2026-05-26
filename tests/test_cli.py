@@ -1,5 +1,7 @@
 """Tests for calculator.cli module."""
 
+import math
+
 import pytest
 
 from calculator.cli import evaluate_expression, parse_number
@@ -138,3 +140,89 @@ class TestCLIIntegration:
         """Test that expressions with various whitespace are handled."""
         normalized, result = evaluate_expression(expr)
         assert result == 5
+
+
+class TestTrigonometricExpressions:
+    """Tests for trigonometric function expressions."""
+
+    @pytest.mark.parametrize(
+        "expr,expected_normalized,expected_result",
+        [
+            ("sin(0)", "sin(0)", 0.0),
+            ("cos(0)", "cos(0)", 1.0),
+            ("tan(0)", "tan(0)", 0.0),
+            ("SIN(0)", "sin(0)", 0.0),
+            ("  sin( 0 )  ", "sin(0)", 0.0),
+        ],
+    )
+    def test_trig_functions_radians(
+        self, expr: str, expected_normalized: str, expected_result: float
+    ) -> None:
+        """Test trigonometric functions in radians mode."""
+        normalized, result = evaluate_expression(expr)
+        assert normalized == expected_normalized
+        assert result == pytest.approx(expected_result, abs=1e-10)
+
+    @pytest.mark.parametrize(
+        "expr,expected_normalized,expected_result",
+        [
+            ("sin(90d)", "sin(90d)", 1.0),
+            ("cos(0d)", "cos(0d)", 1.0),
+            ("tan(45d)", "tan(45d)", 1.0),
+            ("sin(30d)", "sin(30d)", 0.5),
+            ("cos(60d)", "cos(60d)", 0.5),
+        ],
+    )
+    def test_trig_functions_degrees(
+        self, expr: str, expected_normalized: str, expected_result: float
+    ) -> None:
+        """Test trigonometric functions in degrees mode."""
+        normalized, result = evaluate_expression(expr)
+        assert normalized == expected_normalized
+        assert result == pytest.approx(expected_result, abs=1e-10)
+
+    @pytest.mark.parametrize(
+        "expr,expected_normalized,expected_result",
+        [
+            ("asin(0)", "asin(0)", 0.0),
+            ("acos(1)", "acos(1)", 0.0),
+            ("atan(0)", "atan(0)", 0.0),
+            ("asin(1)", "asin(1)", math.pi / 2),
+            ("atan(1)", "atan(1)", math.pi / 4),
+        ],
+    )
+    def test_inverse_trig_functions_radians(
+        self, expr: str, expected_normalized: str, expected_result: float
+    ) -> None:
+        """Test inverse trigonometric functions in radians mode."""
+        normalized, result = evaluate_expression(expr)
+        assert normalized == expected_normalized
+        assert result == pytest.approx(expected_result, abs=1e-10)
+
+    @pytest.mark.parametrize(
+        "expr,expected_normalized,expected_result",
+        [
+            ("asin(1d)", "asin(1d)", 90.0),
+            ("acos(1d)", "acos(1d)", 0.0),
+            ("atan(1d)", "atan(1d)", 45.0),
+            ("asin(0.5d)", "asin(0.5d)", 30.0),
+            ("acos(0.5d)", "acos(0.5d)", 60.0),
+        ],
+    )
+    def test_inverse_trig_functions_degrees(
+        self, expr: str, expected_normalized: str, expected_result: float
+    ) -> None:
+        """Test inverse trigonometric functions with degree output."""
+        normalized, result = evaluate_expression(expr)
+        assert normalized == expected_normalized
+        assert result == pytest.approx(expected_result, abs=1e-10)
+
+    def test_asin_out_of_range(self) -> None:
+        """Test that asin outside [-1, 1] raises ValueError."""
+        with pytest.raises(ValueError, match="asin requires input between -1 and 1"):
+            evaluate_expression("asin(1.5)")
+
+    def test_acos_out_of_range(self) -> None:
+        """Test that acos outside [-1, 1] raises ValueError."""
+        with pytest.raises(ValueError, match="acos requires input between -1 and 1"):
+            evaluate_expression("acos(-1.5)")
