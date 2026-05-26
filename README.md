@@ -1,3 +1,4 @@
+# this project is my way to learn how to work with claude code and mcp
 # Calculator
 
 A simple yet powerful calculator application built in Python, featuring core mathematical operations, calculation history tracking, and an interactive command-line interface.
