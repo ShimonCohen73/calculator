@@ -40,6 +40,25 @@ Entry points defined in pyproject.toml: `calc` (CLI) and `calc-gui` (GUI).
 
 Type alias `Number = Union[int, float]` is used throughout for numeric parameters.
 
+## GUI
+
+The GUI is built with **PyQt6 (6.4.0+)** and launched via the `calc-gui` entry point.
+
+### Standard Mode
+The existing calculator mode featuring:
+- Dark theme with red/orange/purple/gray color scheme
+- Arithmetic operations, trig functions (sin, cos, tan, inv, rad)
+- Calculation history panel with clear history support
+
+### Programmer Mode
+A planned mode for software developers, embedded engineers, and anyone working with binary or hexadecimal numbers. It coexists with Standard mode via a mode-switcher UI element that feels native to the existing dark theme.
+
+**Number system conversions:** DEC, HEX, OCT, BIN
+
+**Bitwise operations:** AND, OR, XOR, NOT, left shift `<<`, right shift `>>`
+
+**Integer size selection:** Byte (8-bit), Word (16-bit), DWord (32-bit), QWord (64-bit)
+
 ## Testing
 
 Tests use pytest with shared fixtures in `conftest.py` (`sample_history_entries`, `populated_history`, `empty_history`). Core tests use `@pytest.mark.parametrize` extensively for input variations.

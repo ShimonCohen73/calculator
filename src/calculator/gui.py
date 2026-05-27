@@ -8,7 +8,7 @@ import math
 import sys
 from typing import Optional
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QPoint
 from PyQt6.QtGui import QFont, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
@@ -20,6 +20,8 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QPushButton,
     QSizePolicy,
+    QSpacerItem,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -84,41 +86,30 @@ class CalculatorButton(QPushButton):
         return color
 
 
-class CalculatorWindow(QMainWindow):
-    """Main calculator window."""
+class StandardModeWidget(QWidget):
+    """Widget containing the standard calculator mode UI."""
 
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
-        self.history = CalculationHistory()
-        self.current_input = ""
-        self.last_result: Optional[float] = None
-        self.inverse_mode = False
-        self.degrees_mode = False
+        self.parent = parent
         self._setup_ui()
-        self._setup_shortcuts()
 
     def _setup_ui(self):
-        """Set up the user interface."""
-        self.setWindowTitle("Calculator")
-        self.setMinimumSize(400, 500)
-        self.setStyleSheet("background-color: #2d2d2d;")
-
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout(central_widget)
+        """Set up the standard mode user interface."""
+        main_layout = QHBoxLayout(self)
         main_layout.setSpacing(10)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setContentsMargins(0, 0, 0, 0)
 
         calc_layout = QVBoxLayout()
         calc_layout.setSpacing(10)
 
-        self.display = QLineEdit()
-        self.display.setReadOnly(True)
-        self.display.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.display.setFont(QFont("Segoe UI", 32))
-        self.display.setMinimumHeight(80)
-        self.display.setText("0")
-        self.display.setStyleSheet("""
+        self.parent.display = QLineEdit()
+        self.parent.display.setReadOnly(True)
+        self.parent.display.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.parent.display.setFont(QFont("Segoe UI", 32))
+        self.parent.display.setMinimumHeight(80)
+        self.parent.display.setText("0")
+        self.parent.display.setStyleSheet("""
             QLineEdit {
                 background-color: #1c1c1c;
                 color: white;
@@ -127,13 +118,13 @@ class CalculatorWindow(QMainWindow):
                 padding: 10px;
             }
         """)
-        calc_layout.addWidget(self.display)
+        calc_layout.addWidget(self.parent.display)
 
-        self.expression_label = QLabel("")
-        self.expression_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.expression_label.setFont(QFont("Segoe UI", 12))
-        self.expression_label.setStyleSheet("color: #888; padding-right: 10px;")
-        calc_layout.addWidget(self.expression_label)
+        self.parent.expression_label = QLabel("")
+        self.parent.expression_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.parent.expression_label.setFont(QFont("Segoe UI", 12))
+        self.parent.expression_label.setStyleSheet("color: #888; padding-right: 10px;")
+        calc_layout.addWidget(self.parent.expression_label)
 
         button_layout = QGridLayout()
         button_layout.setSpacing(8)
@@ -148,31 +139,31 @@ class CalculatorWindow(QMainWindow):
 
         for text, row, col, color in buttons:
             btn = CalculatorButton(text, color)
-            btn.clicked.connect(lambda checked, t=text: self._on_button_click(t))
+            btn.clicked.connect(lambda checked, t=text: self.parent._on_button_click(t))
             button_layout.addWidget(btn, row, col)
 
         trig_grid = QGridLayout()
         trig_grid.setSpacing(8)
 
-        self.sin_btn = CalculatorButton("sin", "#5856d6")
-        self.sin_btn.clicked.connect(lambda: self._calculate_trig("sin"))
-        trig_grid.addWidget(self.sin_btn, 0, 0)
+        self.parent.sin_btn = CalculatorButton("sin", "#5856d6")
+        self.parent.sin_btn.clicked.connect(lambda: self.parent._calculate_trig("sin"))
+        trig_grid.addWidget(self.parent.sin_btn, 0, 0)
 
-        self.cos_btn = CalculatorButton("cos", "#5856d6")
-        self.cos_btn.clicked.connect(lambda: self._calculate_trig("cos"))
-        trig_grid.addWidget(self.cos_btn, 1, 0)
+        self.parent.cos_btn = CalculatorButton("cos", "#5856d6")
+        self.parent.cos_btn.clicked.connect(lambda: self.parent._calculate_trig("cos"))
+        trig_grid.addWidget(self.parent.cos_btn, 1, 0)
 
-        self.tan_btn = CalculatorButton("tan", "#5856d6")
-        self.tan_btn.clicked.connect(lambda: self._calculate_trig("tan"))
-        trig_grid.addWidget(self.tan_btn, 2, 0)
+        self.parent.tan_btn = CalculatorButton("tan", "#5856d6")
+        self.parent.tan_btn.clicked.connect(lambda: self.parent._calculate_trig("tan"))
+        trig_grid.addWidget(self.parent.tan_btn, 2, 0)
 
-        self.inv_btn = CalculatorButton("inv", "#5856d6")
-        self.inv_btn.clicked.connect(self._toggle_inverse)
-        trig_grid.addWidget(self.inv_btn, 3, 0)
+        self.parent.inv_btn = CalculatorButton("inv", "#5856d6")
+        self.parent.inv_btn.clicked.connect(self.parent._toggle_inverse)
+        trig_grid.addWidget(self.parent.inv_btn, 3, 0)
 
-        self.rad_btn = CalculatorButton("rad", "#5856d6")
-        self.rad_btn.clicked.connect(self._toggle_degrees)
-        trig_grid.addWidget(self.rad_btn, 4, 0)
+        self.parent.rad_btn = CalculatorButton("rad", "#5856d6")
+        self.parent.rad_btn.clicked.connect(self.parent._toggle_degrees)
+        trig_grid.addWidget(self.parent.rad_btn, 4, 0)
 
         button_layout.addLayout(trig_grid, 0, 4, 5, 1)
 
@@ -185,9 +176,9 @@ class CalculatorWindow(QMainWindow):
         history_label.setStyleSheet("color: white;")
         history_layout.addWidget(history_label)
 
-        self.history_list = QListWidget()
-        self.history_list.setFont(QFont("Segoe UI", 11))
-        self.history_list.setStyleSheet("""
+        self.parent.history_list = QListWidget()
+        self.parent.history_list.setFont(QFont("Segoe UI", 11))
+        self.parent.history_list.setStyleSheet("""
             QListWidget {
                 background-color: #1c1c1c;
                 color: white;
@@ -203,8 +194,8 @@ class CalculatorWindow(QMainWindow):
                 background-color: #4a4a4a;
             }
         """)
-        self.history_list.itemDoubleClicked.connect(self._on_history_item_clicked)
-        history_layout.addWidget(self.history_list)
+        self.parent.history_list.itemDoubleClicked.connect(self.parent._on_history_item_clicked)
+        history_layout.addWidget(self.parent.history_list)
 
         clear_history_btn = QPushButton("Clear History")
         clear_history_btn.setFont(QFont("Segoe UI", 10))
@@ -220,10 +211,306 @@ class CalculatorWindow(QMainWindow):
                 background-color: #4a4a4a;
             }
         """)
-        clear_history_btn.clicked.connect(self._clear_history)
+        clear_history_btn.clicked.connect(self.parent._clear_history)
         history_layout.addWidget(clear_history_btn)
 
         main_layout.addLayout(history_layout, stretch=1)
+
+
+class ProgrammerModeWidget(QWidget):
+    """Widget containing the programmer calculator mode UI."""
+
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+        self._setup_ui()
+
+    def _setup_ui(self):
+        """Set up the programmer mode user interface."""
+        main_layout = QHBoxLayout(self)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Left side: Display panel
+        calc_layout = QVBoxLayout()
+        calc_layout.setSpacing(10)
+
+        programmer_display = QLineEdit()
+        programmer_display.setReadOnly(True)
+        programmer_display.setAlignment(Qt.AlignmentFlag.AlignRight)
+        programmer_display.setFont(QFont("Segoe UI", 32))
+        programmer_display.setMinimumHeight(80)
+        programmer_display.setText("0")
+        programmer_display.setStyleSheet("""
+            QLineEdit {
+                background-color: #1c1c1c;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px;
+            }
+        """)
+        calc_layout.addWidget(programmer_display)
+
+        # Placeholder for future bitwise operations buttons
+        calc_layout.addStretch()
+
+        main_layout.addLayout(calc_layout, stretch=2)
+
+        # Right side: History panel
+        history_layout = QVBoxLayout()
+        history_label = QLabel("History")
+        history_label.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
+        history_label.setStyleSheet("color: white;")
+        history_layout.addWidget(history_label)
+
+        programmer_history_list = QListWidget()
+        programmer_history_list.setFont(QFont("Segoe UI", 11))
+        programmer_history_list.setStyleSheet("""
+            QListWidget {
+                background-color: #1c1c1c;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 5px;
+            }
+            QListWidget::item {
+                padding: 8px;
+                border-bottom: 1px solid #3a3a3a;
+            }
+            QListWidget::item:selected {
+                background-color: #4a4a4a;
+            }
+        """)
+        history_layout.addWidget(programmer_history_list)
+
+        clear_history_btn = QPushButton("Clear History")
+        clear_history_btn.setFont(QFont("Segoe UI", 10))
+        clear_history_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #3a3a3a;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+            }
+            QPushButton:hover {
+                background-color: #4a4a4a;
+            }
+        """)
+        clear_history_btn.clicked.connect(self.parent._clear_history)
+        history_layout.addWidget(clear_history_btn)
+
+        main_layout.addLayout(history_layout, stretch=1)
+
+
+class ModeToolbar(QWidget):
+    """Toolbar with hamburger menu for mode switching."""
+
+    hamburger_clicked = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self.is_open = False
+        self._setup_ui()
+
+    def _setup_ui(self):
+        """Set up the toolbar UI."""
+        self.setFixedHeight(50)
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #1c1c1c;
+                border-bottom: 1px solid #3a3a3a;
+            }
+        """)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.hamburger_btn = QPushButton("☰")
+        self.hamburger_btn.setFixedSize(50, 50)
+        self.hamburger_btn.setFont(QFont("Segoe UI", 24))
+        self.hamburger_btn.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: white;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #3a3a3a;
+            }
+            QPushButton:pressed {
+                background-color: #2a2a2a;
+            }
+        """)
+        self.hamburger_btn.clicked.connect(self.hamburger_clicked.emit)
+        layout.addWidget(self.hamburger_btn)
+
+        layout.addStretch()
+
+    def set_open_state(self, is_open: bool):
+        """Update hamburger button appearance based on open state."""
+        self.is_open = is_open
+        self.hamburger_btn.setText("×" if is_open else "☰")
+
+
+class SidebarOverlay(QWidget):
+    """Semi-transparent overlay that appears when sidebar is open."""
+
+    clicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setStyleSheet("background-color: rgba(0, 0, 0, 0.3);")
+        self.hide()
+
+    def mousePressEvent(self, event):
+        """Emit clicked signal when overlay is clicked."""
+        self.clicked.emit()
+        super().mousePressEvent(event)
+
+
+class ModeSidebar(QWidget):
+    """Sidebar for selecting calculator mode."""
+
+    mode_selected = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.current_mode = "standard"
+        self._setup_ui()
+
+    def _setup_ui(self):
+        """Set up the sidebar UI."""
+        self.setFixedWidth(200)
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #1c1c1c;
+                border-right: 1px solid #3a3a3a;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        title = QLabel("Calculator Mode")
+        title.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
+        title.setStyleSheet("""
+            QLabel {
+                color: white;
+                padding: 20px 15px 10px 15px;
+                border: none;
+            }
+        """)
+        layout.addWidget(title)
+
+        self.standard_btn = QPushButton("Standard")
+        self.standard_btn.setFont(QFont("Segoe UI", 14))
+        self.standard_btn.clicked.connect(lambda: self.mode_selected.emit("standard"))
+        layout.addWidget(self.standard_btn)
+
+        self.programmer_btn = QPushButton("Programmer")
+        self.programmer_btn.setFont(QFont("Segoe UI", 14))
+        self.programmer_btn.clicked.connect(lambda: self.mode_selected.emit("programmer"))
+        layout.addWidget(self.programmer_btn)
+
+        layout.addStretch()
+
+        self.set_active_mode("standard")
+        self.hide()
+
+    def set_active_mode(self, mode: str):
+        """Update button styling to highlight the active mode."""
+        self.current_mode = mode
+
+        normal_style = """
+            QPushButton {
+                background-color: transparent;
+                color: #ccc;
+                padding: 15px 20px;
+                text-align: left;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #3a3a3a;
+            }
+        """
+
+        active_style = """
+            QPushButton {
+                background-color: #4a4a4a;
+                color: white;
+                padding: 15px 20px;
+                text-align: left;
+                border: none;
+                border-left: 3px solid #ff9500;
+            }
+            QPushButton:hover {
+                background-color: #4a4a4a;
+            }
+        """
+
+        self.standard_btn.setStyleSheet(active_style if mode == "standard" else normal_style)
+        self.programmer_btn.setStyleSheet(active_style if mode == "programmer" else normal_style)
+
+
+class CalculatorWindow(QMainWindow):
+    """Main calculator window."""
+
+    def __init__(self):
+        super().__init__()
+        self.history = CalculationHistory()
+        self.current_input = ""
+        self.last_result: Optional[float] = None
+        self.inverse_mode = False
+        self.degrees_mode = False
+        self.current_mode = "standard"
+        self.sidebar_visible = False
+        self._setup_ui()
+        self._setup_shortcuts()
+
+    def _setup_ui(self):
+        """Set up the user interface."""
+        self.setWindowTitle("Calculator")
+        self.setMinimumSize(400, 500)
+        self.setStyleSheet("background-color: #2d2d2d;")
+
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Add toolbar
+        self.toolbar = ModeToolbar()
+        self.toolbar.hamburger_clicked.connect(self._toggle_sidebar)
+        main_layout.addWidget(self.toolbar)
+
+        # Add mode container
+        container = QWidget()
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(10, 10, 10, 10)
+
+        self.mode_stack = QStackedWidget()
+        self.standard_widget = StandardModeWidget(self)
+        self.programmer_widget = ProgrammerModeWidget(self)
+        self.mode_stack.addWidget(self.standard_widget)
+        self.mode_stack.addWidget(self.programmer_widget)
+        container_layout.addWidget(self.mode_stack)
+
+        main_layout.addWidget(container)
+
+        # Add overlay (initially hidden, positioned absolutely)
+        self.overlay = SidebarOverlay(central_widget)
+        self.overlay.clicked.connect(self._toggle_sidebar)
+        self.overlay.setGeometry(0, 50, self.width(), self.height() - 50)
+
+        # Add sidebar (initially hidden, positioned absolutely)
+        self.sidebar = ModeSidebar(central_widget)
+        self.sidebar.mode_selected.connect(self._on_mode_selected)
+        self.sidebar.setGeometry(-200, 50, 200, self.height() - 50)
 
     def _setup_shortcuts(self):
         """Set up keyboard shortcuts."""
@@ -458,8 +745,77 @@ class CalculatorWindow(QMainWindow):
         self.history.clear()
         self.history_list.clear()
 
+    def _switch_mode(self, mode: str):
+        """Switch between calculator modes."""
+        if mode == self.current_mode:
+            return
+
+        self.current_mode = mode
+        self.history.clear()
+        self.current_input = ""
+        self.last_result = None
+
+        if mode == "standard":
+            self.mode_stack.setCurrentIndex(0)
+            self.history_list.clear()
+            self.display.setText("0")
+            self.expression_label.setText("")
+        elif mode == "programmer":
+            self.mode_stack.setCurrentIndex(1)
+            self.history_list.clear()
+
+    def _toggle_sidebar(self):
+        """Toggle sidebar visibility with animation."""
+        self.sidebar_visible = not self.sidebar_visible
+        self.toolbar.set_open_state(self.sidebar_visible)
+
+        # Create animation for sidebar
+        self.sidebar_animation = QPropertyAnimation(self.sidebar, b"pos")
+        self.sidebar_animation.setDuration(200)
+
+        if self.sidebar_visible:
+            # Show sidebar and overlay
+            self.overlay.show()
+            self.sidebar.show()
+            self.sidebar_animation.setStartValue(QPoint(-200, 50))
+            self.sidebar_animation.setEndValue(QPoint(0, 50))
+        else:
+            # Hide sidebar and overlay
+            self.sidebar_animation.setStartValue(QPoint(0, 50))
+            self.sidebar_animation.setEndValue(QPoint(-200, 50))
+            self.sidebar_animation.finished.connect(self._on_sidebar_close_finished)
+
+        self.sidebar_animation.start()
+
+    def _on_sidebar_close_finished(self):
+        """Called when sidebar close animation finishes."""
+        if not self.sidebar_visible:
+            self.sidebar.hide()
+            self.overlay.hide()
+
+    def _on_mode_selected(self, mode: str):
+        """Handle mode selection from sidebar."""
+        self._switch_mode(mode)
+        self.sidebar.set_active_mode(mode)
+        if self.sidebar_visible:
+            self._toggle_sidebar()
+
+    def resizeEvent(self, event):
+        """Handle window resize to reposition overlay and sidebar."""
+        super().resizeEvent(event)
+        if hasattr(self, 'overlay'):
+            self.overlay.setGeometry(0, 50, self.width(), self.height() - 50)
+        if hasattr(self, 'sidebar'):
+            x = 0 if self.sidebar_visible else -200
+            self.sidebar.setGeometry(x, 50, 200, self.height() - 50)
+
     def keyPressEvent(self, event):
         """Handle keyboard input."""
+        # Close sidebar on Escape if open
+        if event.key() == Qt.Key.Key_Escape and self.sidebar_visible:
+            self._toggle_sidebar()
+            return
+
         key = event.text()
         if key.isdigit() or key in "+-*/.^%":
             self._append_to_input(key)
